@@ -1,20 +1,20 @@
+import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from torch import flatten
 
-import torchvision.models.resnet
 
 class ResNetBlock(nn.Module):
     def __init__(self, in_channels, out_channels, stride=1, downsample=None):
         super().__init__()
-        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3,
+                               stride=stride, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3,
+                               stride=1, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(out_channels)
         self.downsample = downsample
 
-        # todo: kaiming initialization? for conv layers and M4 GPU integration
+        # todo: kaiming initialization?
 
     def forward(self, x):
         identity = x
@@ -34,12 +34,13 @@ class ResNetBlock(nn.Module):
 
         return out
 
+
 class ResNet18(nn.Module):
-    def __init__(self, num_classes=10):
+    def __init__(self, in_channels=1, num_classes=10):
         super().__init__()
 
-        # in_channels = 1 since Mel-Spectograms are gonna be 128x128x1
-        self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        # in_channels = 1 since Mel-Spectograms are gonna be ~128x128x1
+        self.conv1 = nn.Conv2d(in_channels, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
 
@@ -53,7 +54,7 @@ class ResNet18(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512, num_classes)
 
-        # todo: kaiming initialization? for conv layers and M4 GPU integration
+        # todo: kaiming initialization?
 
     def forward(self, x):
         # first layer forward pass
@@ -63,7 +64,7 @@ class ResNet18(nn.Module):
 
         x = self.maxpool(x)
 
-        # pass through all residual block
+        # pass through all residual blocks
         x = self.conv2(x)
         x = self.conv3(x)
         x = self.conv4(x)
@@ -71,15 +72,16 @@ class ResNet18(nn.Module):
 
         # global pooling and fc layer at the end
         x = self.avgpool(x)
-        x = flatten(x, 1)
+        x = torch.flatten(x, 1)
         x = self.fc(x)
         return x
 
     def make_layer(self, in_channels, out_channels, num_blocks, stride=1):
         downsample = None
         if stride != 1 or in_channels != out_channels:
-            self.downsample = nn.Sequential(
-                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False),
+            downsample = nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, kernel_size=1,
+                          stride=stride, bias=False),
                 nn.BatchNorm2d(out_channels)
             )
 
