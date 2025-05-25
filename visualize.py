@@ -209,6 +209,40 @@ def visualize_spectral_centroid(file_path: str):
     pass
 
 
+def generate_figure():
+    files = [
+        'data/genres/country/country.00009.wav',
+        'data/genres/pop/pop.00034.wav',
+        'data/genres/reggae/reggae.00012.wav',
+        'data/genres/classical/classical.00021.wav',
+        'data/genres/disco/disco.00001.wav',
+        'data/genres/rock/rock.00056.wav'
+    ]
+    colors = [
+        "#DE923A",
+        "#33b8c5",
+        '#cd5656',
+        "#ad2967",
+        "#178961",
+        "#3731eb"
+    ]
+    plt.figure(figsize=(10, 8))
+    for i in range(len(files)):
+        plt.subplot(3, 2, i + 1)
+
+        genre = re.search('data/genres/(.+)/.*', files[i])
+        if genre is None:
+            continue
+
+        y, sr = librosa.load(files[i])
+        librosa.display.waveshow(y, sr=sr, color=colors[i])
+        plt.title(f'Waveform of {genre[1]} music')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Amplitude')
+    plt.tight_layout()
+    plt.show()
+
+
 def main():
     parser = argparse.ArgumentParser(description='Visualize wave file audio features')
     parser.add_argument('file_paths', type=str, nargs='+', help='Paths to the wave files')
@@ -236,7 +270,7 @@ def main():
         case 'centr':
             pass
         case _:
-            pass
+            generate_figure()
 
 
 if __name__ == '__main__':
