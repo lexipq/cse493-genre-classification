@@ -1,9 +1,11 @@
+import argparse
 import librosa
 import librosa.display
 import math
 import matplotlib.pyplot as plt
 import numpy as np
 import pygame
+import re
 
 
 def init_mixer(frequency: int = 44100, from_file: bool = True) -> None:
@@ -171,3 +173,71 @@ def visualize_features(file_path: str, frequency: int | None = None) -> None:
 
     plt.tight_layout()
     plt.show()
+
+
+def visualize_waveform(file_path: str, color: str):
+    genre = re.search('data/genres/(.+)/.*', file_path)
+    if genre is None:
+        return
+
+    y, sr = librosa.load(file_path)
+    plt.figure(figsize=(8, 8))
+    librosa.display.waveshow(y, sr=sr, color=color)
+    plt.title(f'Waveform of {genre[1]} music')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Amplitude')
+    plt.show()
+
+
+def visualize_spectogram(file_path: str):
+    pass
+
+
+def visualize_mel_spectogram(file_path: str):
+    pass
+
+
+def visualize_mfcc(file_path: str):
+    pass
+
+
+def visualize_chroma(file_path: str):
+    pass
+
+
+def visualize_spectral_centroid(file_path: str):
+    pass
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Visualize wave file audio features')
+    parser.add_argument('file_paths', type=str, nargs='+', help='Paths to the wave files')
+    parser.add_argument(
+        '-f', '--features',
+        choices=['all', 'wav', 'spec', 'mel', 'mfcc', 'chroma', 'centr'],
+        default='all',
+        help='Which audio features to visualize'
+    )
+    parser.add_argument('-c', '--color', type=str, default='1f77b4', help='The color to use when plotting in hex')
+
+    args = parser.parse_args()
+    match args.features:
+        case 'wav':
+            for file_path in args.file_paths:
+                visualize_waveform(file_path, '#' + args.color)
+        case 'spec':
+            pass
+        case 'mel':
+            pass
+        case 'mfcc':
+            pass
+        case 'chroma':
+            pass
+        case 'centr':
+            pass
+        case _:
+            pass
+
+
+if __name__ == '__main__':
+    main()
