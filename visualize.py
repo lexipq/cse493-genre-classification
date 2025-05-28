@@ -214,7 +214,7 @@ def generate_figure():
         'data/genres/country/country.00009.wav',
         'data/genres/pop/pop.00034.wav',
         'data/genres/reggae/reggae.00012.wav',
-        'data/genres/classical/classical.00021.wav',
+        'data/genres/classical/classical.00081.wav',
         'data/genres/disco/disco.00001.wav',
         'data/genres/rock/rock.00056.wav'
     ]
@@ -235,7 +235,7 @@ def generate_figure():
             continue
 
         y, sr = librosa.load(files[i])
-        librosa.display.waveshow(y, sr=sr, color=colors[i])
+        librosa.display.waveshow(y, sr=sr, color=colors[i], alpha=0.9)
         plt.title(f'Waveform of {genre[1]} music')
         plt.xlabel('Time (s)')
         plt.ylabel('Amplitude')

@@ -92,3 +92,8 @@ class ResNet18(nn.Module):
             layers.append(ResNetBlock(out_channels, out_channels))
 
         return nn.Sequential(*layers)
+
+
+class MLP(nn.Module):
+    def __init__(self, input_size, hidden_layers, num_classes):
+        super().__init__()
