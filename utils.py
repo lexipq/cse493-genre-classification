@@ -4,55 +4,37 @@ import librosa.display
 import math
 import matplotlib.pyplot as plt
 import numpy as np
-import pygame
+import pandas as pd
 import re
+import torch
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 
-def init_mixer(frequency: int = 44100, from_file: bool = True) -> None:
-    """
-    Initializes the pygame mixer for audio playback
+def load_mlp_data(train_split=0.7):
+    df = pd.read_csv('data/features_3_sec.csv')
+    df = df.drop(labels='filename', axis=1)
 
-    Args:
-        frequency (int):
-            The frequency in Hz to initialize the mixer with. If not specified,
-            defaults to 44100 (44.1 kHz)
-        from_file (bool):
-            Indicates whether the audio was read from a file path (True)
-            or sampled using librosa (False)
-    """
-    if from_file:
-        pygame.mixer.init()
-    else:
-        pygame.mixer.init(frequency, channels=1)
+    # get all target classes and convert -> index [0-9]
+    classes = df.iloc[:,-1]
+    converter = LabelEncoder()
+    y = converter.fit_transform(classes)
+    y = torch.tensor(y, dtype=torch.float32)
 
+    # standardize all features: zero mean unit variance
+    norm = StandardScaler()
+    x = norm.fit_transform(np.array(df.iloc[:,:-1], dtype=np.float32))
+    x = torch.from_numpy(x)
 
-def play_file_audio(file_path: str) -> None:
-    """
-    Plays audio from a file using ``pygame.mixer``
-
-    Args:
-        file_path (str): the path to the file being played
-
-    .. note:: the pygame mixer must be initialized by calling ``init_mixer()``
-    """
-    sound = pygame.mixer.Sound(file_path)
-    sound.play()
+    return train_test_split(x, y, train_size=train_split)
 
 
-def play_sampled_audio(sample: np.ndarray) -> None:
-    """
-    Plays the audio sampled using librosa
+def load_sampled_cnn_data():
+    pass
 
-    Args:
-        sample (ndarray): the sample data
 
-    .. note:: the pygame mixer must be initialized by calling ``init_mixer()``
-    """
-    y_int16 = np.int16(sample * 32767)
-    sound_buffer = y_int16.tobytes()
-
-    sound = pygame.mixer.Sound(buffer=sound_buffer)
-    sound.play()
+def load_full_cnn_data():
+    pass
 
 
 def get_samples(

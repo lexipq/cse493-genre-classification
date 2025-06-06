@@ -7,10 +7,12 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.metrics import accuracy_score
 from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 
 
 # (preprocessing) https://www.kaggle.com/code/jvedarutvija/music-genre-classification
-# (visualization) https://scikit-learn.org/stable/auto_examples/neighbors/plot_classification.html
+# (visualization pca) https://scikit-learn.org/stable/auto_examples/neighbors/plot_classification.html
+# (visualization tsne) https://scikit-learn.org/stable/auto_examples/neighbors/approximate_nearest_neighbors.html
 
 df = pd.read_csv('data/features_3_sec.csv')
 df = df.drop(labels='filename', axis=1)
@@ -40,6 +42,15 @@ test_accuracy = accuracy_score(y_test, y_pred_test)
 
 print(f"Training accuracy {training_accuracy:.3f}")
 print(f"Test accuracy {test_accuracy:.3f}")
+
+X_embedded = TSNE().fit_transform(data)
+plt.figure(figsize=(8, 6))
+plt.scatter(X_embedded[:, 0], X_embedded[:, 1], c=y, cmap='viridis')
+plt.colorbar()
+plt.xlabel('TSNE Dimension 1')
+plt.ylabel('TSNE Dimension 2')
+plt.title('t-SNE Visualization')
+plt.show()
 
 # Fit PCA on training data
 pca = PCA(n_components=2)
