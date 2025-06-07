@@ -123,3 +123,164 @@ class MLP(nn.Module):
         for module in self.modules():
             if isinstance(module, nn.Linear):
                 nn.init.kaiming_normal_(module.weight)
+
+class CNN(object):
+    def __init__(
+        self,
+        input_dim=(1, 128, 128),
+        num_filters=32,
+        filter_size=7,
+        hidden_dim=100,
+        num_classes=10,
+        weight_scale=1e-3,
+        reg=0.0,
+        dtype=torch.float32,
+    ):
+        self.params = {}
+        self.reg = reg
+        self.dtype = dtype
+
+        C, H, W = input_dim
+        F = num_filters
+        self.params['W1'] = weight_scale * torch.randn(F, C, filter_size, filter_size)
+        self.params['b1'] = torch.zeros(F)
+        stride_pool = 2
+        width_pool = 2  
+        Hp = int((H - width_pool) / stride_pool + 1)  
+        Wp = int((W - width_pool) / stride_pool + 1)
+        Hh = hidden_dim
+        self.params['W2'] = weight_scale * torch.randn(F * Hp * Wp, Hh)
+        self.params['b2'] = torch.zeros(Hh)
+        Hc = num_classes
+        self.params['W3'] = weight_scale * torch.randn(Hh, Hc)
+        self.params['b3'] = torch.zeros(Hc)
+
+        for k, v in self.params.items():
+            self.params[k] = v.type(dtype)
+class CNN(object):
+    def __init__(
+        self,
+        input_dim=(1, 128, 128),
+        num_filters=32,
+        filter_size=7,
+        hidden_dim=100,
+        num_classes=10,
+        weight_scale=1e-3,
+        reg=0.0,
+        dtype=torch.float32,
+    ):
+        self.params = {}
+        self.reg = reg
+        self.dtype = dtype
+
+        C, H, W = input_dim
+        F = num_filters
+        self.params['W1'] = weight_scale * torch.randn(F, C, filter_size, filter_size)
+        self.params['b1'] = torch.zeros(F)
+        stride_pool = 2
+        width_pool = 2  
+        Hp = int((H - width_pool) / stride_pool + 1)  
+        Wp = int((W - width_pool) / stride_pool + 1)
+        Hh = hidden_dim
+        self.params['W2'] = weight_scale * torch.randn(F * Hp * Wp, Hh)
+        self.params['b2'] = torch.zeros(Hh)
+        Hc = num_classes
+        self.params['W3'] = weight_scale * torch.randn(Hh, Hc)
+        self.params['b3'] = torch.zeros(Hc)
+
+        for k, v in self.params.items():
+            self.params[k] = v.type(dtype)
+class CNN(object):
+    def __init__(
+        self,
+        input_dim=(1, 128, 128),
+        num_filters=32,
+        filter_size=7,
+        hidden_dim=100,
+        num_classes=10,
+        weight_scale=1e-3,
+        reg=0.0,
+        dtype=torch.float32,
+    ):
+        self.params = {}
+        self.reg = reg
+        self.dtype = dtype
+
+        C, H, W = input_dim
+        F = num_filters
+        self.params['W1'] = weight_scale * torch.randn(F, C, filter_size, filter_size)
+        self.params['b1'] = torch.zeros(F)
+        stride_pool = 2
+        width_pool = 2  
+        Hp = int((H - width_pool) / stride_pool + 1)  
+        Wp = int((W - width_pool) / stride_pool + 1)
+        Hh = hidden_dim
+        self.params['W2'] = weight_scale * torch.randn(F * Hp * Wp, Hh)
+        self.params['b2'] = torch.zeros(Hh)
+        Hc = num_classes
+        self.params['W3'] = weight_scale * torch.randn(Hh, Hc)
+        self.params['b3'] = torch.zeros(Hc)
+
+        for k, v in self.params.items():
+            self.params[k] = v.type(dtype)
+class CNN(object):
+    def __init__(
+        self,
+        input_dim=(1, 128, 128),
+        num_filters=32,
+        filter_size=7,
+        hidden_dim=100,
+        num_classes=10,
+        weight_scale=1e-3,
+        reg=0.0,
+        dtype=torch.float32,
+    ):
+        self.params = {}
+        self.reg = reg
+        self.dtype = dtype
+
+        C, H, W = input_dim
+        F = num_filters
+        self.params['W1'] = weight_scale * torch.randn(F, C, filter_size, filter_size)
+        self.params['b1'] = torch.zeros(F)
+        stride_pool = 2
+        width_pool = 2  
+        Hp = int((H - width_pool) / stride_pool + 1)  
+        Wp = int((W - width_pool) / stride_pool + 1)
+        Hh = hidden_dim
+        self.params['W2'] = weight_scale * torch.randn(F * Hp * Wp, Hh)
+        self.params['b2'] = torch.zeros(Hh)
+        Hc = num_classes
+        self.params['W3'] = weight_scale * torch.randn(Hh, Hc)
+        self.params['b3'] = torch.zeros(Hc)
+
+        for k, v in self.params.items():
+            self.params[k] = v.type(dtype)
+
+
+class CNN(nn.Module):
+    def __init__(
+        self,
+        input_dim=(1, 128, 128),
+        num_filters=32,
+        filter_size=3,
+        hidden_dim=100,
+        num_classes=10,
+        weight_scale=1e-3,
+        reg=0.0,
+    ):
+        super(CNN, self).__init__()
+        self.conv1 = nn.Conv2d(input_dim[0], num_filters, kernel_size=filter_size, padding= 1)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.conv1 = nn.Conv2d(input_dim[0], num_filters, kernel_size=filter_size, padding= 1)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.fc1 = nn.Linear(num_filters * ((input_dim[1] / 2) * (input_dim[2] / 2)).floor, hidden_dim)
+        self.fc2 = nn.Linear(hidden_dim, num_classes)
+        self.reg = reg
+
+    def forward(self, x):
+        x = self.pool(nn.functional.relu(self.conv1(x)))
+        x = x.view(x.size(0), -1)
+        x = nn.functional.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
