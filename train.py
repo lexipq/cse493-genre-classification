@@ -16,7 +16,7 @@ device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 print('using device', device)
 
 
-def train_model(model, optimizer, epochs=20, print_every=100):
+def train_model(model, optimizer, epochs=15, print_every=100):
     model = model.to(device)
     for e in range(epochs):
         model.train()
@@ -75,15 +75,15 @@ def plot_curves():
 
     plt.figure(figsize=(10, 5))
     plt.subplot(2, 1, 1)
-    plt.scatter(iters, training_loss, label='Training Loss', color='blue')
+    plt.scatter(iters, training_loss, label='Training Loss', color='dodgerblue')
     plt.xlabel('Iteration')
     plt.ylabel('Loss')
     plt.title('Training Loss')
     plt.legend()
 
     plt.subplot(2, 1, 2)
-    plt.plot(epochs, training_accs, label='Training Accuracy', color='green', marker='o')
-    plt.plot(epochs, validation_accs, label='Validation Accuracy', color='orange', marker='o')
+    plt.plot(epochs, training_accs, label='Training Accuracy', color='dodgerblue', marker='o')
+    plt.plot(epochs, validation_accs, label='Validation Accuracy', color='darkorange', marker='o')
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.title('Accuracy (per epoch)')
@@ -94,18 +94,23 @@ def plot_curves():
 
 
 if __name__ == '__main__':
-    model = MLP()
-    model.initialize_weights()
+    model = MLP(hidden_dims=[128, 256, 256, 256, 128])
+
     # lr = 0.001 was too small and it was taking forever probably due to dropout
     optimizer = optim.SGD(model.parameters(), lr=0.01)
+
     X_train, X_test, y_train, y_test = utils.load_mlp_data()
+    # X_train, X_test, y_train, y_test = utils.load_sampled_cnn_data()
+    # X_train, X_test, y_train, y_test = utils.load_full_cnn_data()
 
     train_dataset = TensorDataset(X_train, y_train)
     test_dataset = TensorDataset(X_test, y_test)
 
-    # split around 0.8 of the training set
-    num_train = 5595
+    # 80/20 split for training and validation sets
+    num_train = int(0.8 * len(train_dataset) // 1)
     size = len(train_dataset)
+    # print(f'train set: {num_train}, val set: {size - num_train}')
+    # print(f'test set: {len(test_dataset)}')
 
     train_loader = DataLoader(train_dataset, batch_size=64, sampler=sampler.SubsetRandomSampler(range(num_train)))
     val_loader = DataLoader(train_dataset, batch_size=64, sampler=sampler.SubsetRandomSampler(range(num_train, size)))

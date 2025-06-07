@@ -14,8 +14,6 @@ class ResNetBlock(nn.Module):
         self.bn2 = nn.BatchNorm2d(out_channels)
         self.downsample = downsample
 
-        # todo: kaiming initialization?
-
     def forward(self, x):
         identity = x
 
@@ -53,8 +51,6 @@ class ResNet18(nn.Module):
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512, num_classes)
-
-        # todo: kaiming initialization?
 
     def forward(self, x):
         # first layer forward pass
@@ -95,57 +91,32 @@ class ResNet18(nn.Module):
 
 
 class MLP(nn.Module):
-    # architecture: 58, 128, 256x3, 128, 10
-    def __init__(self):
+    # architecture: {linear-bn-relu-dropout}* -> linear
+    def __init__(self, input_dim=58, hidden_dims: list[int] = [], num_classes=10):
         super().__init__()
-        self.fc1 = nn.Linear(58, 128)
-        self.bn1 = nn.BatchNorm1d(128)
-        self.relu = nn.ReLU(inplace=True)
-        self.dropout = nn.Dropout(p=0.2)
-
-        self.fc2 = nn.Linear(128, 256)
-        self.bn2 = nn.BatchNorm1d(256)
-
-        self.fc3 = nn.Linear(256, 256)
-        self.bn3 = nn.BatchNorm1d(256)
-
-        self.fc4 = nn.Linear(256, 256)
-        self.bn4 = nn.BatchNorm1d(256)
-
-        self.fc5 = nn.Linear(256, 128)
-        self.bn5 = nn.BatchNorm1d(128)
-
-        self.fc6 = nn.Linear(128, 10)
+        self.model = self.make_model(input_dim, hidden_dims, num_classes)
+        self.initialize_weights()
 
     def forward(self, x):
-        x = torch.flatten(x, 1)
-        x = self.fc1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
-        x = self.dropout(x)
+        return self.model(x)
 
-        x = self.fc2(x)
-        x = self.bn2(x)
-        x = self.relu(x)
-        x = self.dropout(x)
+    def make_model(self, input_dim, hidden_dims, num_classes, dropout_p=0.2):
+        layers = []
 
-        x = self.fc3(x)
-        x = self.bn3(x)
-        x = self.relu(x)
-        x = self.dropout(x)
+        for in_dim, h_dim in zip([input_dim, *hidden_dims[:-1]], hidden_dims):
+            layers.extend([
+                nn.Linear(in_dim, h_dim),
+                nn.BatchNorm1d(h_dim),
+                nn.ReLU(),
+                nn.Dropout(dropout_p)
+            ])
 
-        x = self.fc4(x)
-        x = self.bn4(x)
-        x = self.relu(x)
-        x = self.dropout(x)
+        if hidden_dims:
+            layers.append(nn.Linear(hidden_dims[-1], num_classes))
+        else:
+            layers.append(nn.Linear(input_dim, num_classes))
 
-        x = self.fc5(x)
-        x = self.bn5(x)
-        x = self.relu(x)
-        x = self.dropout(x)
-
-        scores = self.fc6(x)
-        return scores
+        return nn.Sequential(*layers)
 
     def initialize_weights(self):
         # kaiming init for all linear layers
