@@ -4,6 +4,7 @@ import librosa.display
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import pandas as pd
 import re
 import torch
@@ -11,30 +12,98 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 
-def load_mlp_data(train_split=0.7):
-    df = pd.read_csv('data/features_3_sec.csv')
-    df = df.drop(labels='filename', axis=1)
+spec_dim = 128
+genre_to_label = {
+    'blues': 0,
+    'classical': 1,
+    'country': 2,
+    'disco': 3,
+    'hiphop': 4,
+    'jazz': 5,
+    'metal': 6,
+    'pop': 7,
+    'reggae': 8,
+    'rock': 9
+}
 
-    # get all target classes and convert -> index [0-9]
-    classes = df.iloc[:,-1]
-    converter = LabelEncoder()
-    y = converter.fit_transform(classes)
-    y = torch.tensor(y, dtype=torch.float32)
 
-    # standardize all features: zero mean unit variance
-    norm = StandardScaler()
-    x = norm.fit_transform(np.array(df.iloc[:,:-1], dtype=np.float32))
-    x = torch.from_numpy(x)
+def load_mlp_data(train_split=0.8):
+    x_path = 'data/mlp_data.pt'
+    y_path = 'data/mlp_gt.pt'
+    if not os.path.exists(x_path) or not os.path.exists(y_path):
+        df = pd.read_csv('data/features_3_sec.csv')
+        df = df.drop(labels='filename', axis=1)
 
+        # get all target classes and convert -> index [0-9]
+        classes = df.iloc[:,-1]
+        converter = LabelEncoder()
+        y = converter.fit_transform(classes)
+        y = torch.tensor(y, dtype=torch.long)
+
+        # standardize all features: zero mean unit variance
+        norm = StandardScaler()
+        x = norm.fit_transform(np.array(df.iloc[:,:-1], dtype=np.float32))
+        x = torch.from_numpy(x)
+        torch.save(x, x_path)
+        torch.save(y, y_path)
+    else:
+        x = torch.load(x_path)
+        y = torch.load(y_path)
+
+    print('loaded tensor x:', x.shape)
+    print('loaded tensor y', y.shape)
     return train_test_split(x, y, train_size=train_split)
 
 
-def load_sampled_cnn_data():
-    pass
+def load_sampled_cnn_data(sample_size=3, train_split=0.8):
+    x_path = 'data/cnn_data.pt'
+    y_path = 'data/cnn_gt.pt'
+    if not os.path.exists(x_path) or not os.path.exists(y_path):
+        dataset = []
+        labels = []
+        base = 'data/genres/'
+
+        for root, _, files in os.walk(base):
+            if root == base:
+                continue
+
+            genre = root[len(base):]
+            print('genre loaded:', genre)
+            label = genre_to_label[genre]
+
+            for file in files:
+                # skip corrupted file
+                if file == 'jazz.00054.wav':
+                    continue
+
+                samples, sr = get_samples(os.path.join(root, file), sample_size)
+                specs = get_spectrogram_from_samples(samples, sr)
+                dataset.extend(specs)
+
+                ys = [label] * len(samples)
+                labels.extend(ys)
+
+        x = standardize_per_sample(torch.from_numpy(np.array(dataset)))
+        y = torch.tensor(labels, dtype=torch.long)
+        torch.save(x, x_path)
+        torch.save(y, y_path)
+    else:
+        x = torch.load(x_path)
+        y = torch.load(y_path)
+
+    print('loaded tensor x:', x.shape)
+    print('loaded tensor y', y.shape)
+    return train_test_split(x, y, train_size=train_split)
 
 
 def load_full_cnn_data():
     pass
+
+
+def standardize_per_sample(x: torch.Tensor):
+    mean = x.mean(dim=[2, 3], keepdim=True)
+    std = x.std(dim=[2, 3], keepdim=True)
+    return (x - mean) / (std + 1e-6)
 
 
 def get_samples(
@@ -42,7 +111,7 @@ def get_samples(
     sample_len: int,
     stride: int = 1,
     frequency: int | None = None
-) -> list[np.ndarray]:
+) -> tuple[list[np.ndarray], int | float]:
     """
     Samples an audio file using a sliding window
 
@@ -61,7 +130,20 @@ def get_samples(
     stride = int(stride * sr)
     out_len = math.floor((len(y) - window_len) / stride) + 1
 
-    return [y[i * stride : i * stride + window_len] for i in range(out_len)]
+    return [y[i * stride : i * stride + window_len] for i in range(out_len)], sr
+
+
+def get_spectrogram_from_samples(samples, sr):
+    spectrograms = []
+
+    for y in samples:
+        spec = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000)
+        spec = spec[:, :spec_dim] # limit to a 128x128 image
+        spec_db = librosa.power_to_db(spec, ref=np.max)
+        spec_db = spec_db.reshape(1, spec_dim, spec_dim) # reshape to 1x128x128
+        spectrograms.append(spec_db)
+
+    return spectrograms
 
 
 def plot_samples(
@@ -256,4 +338,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    load_mlp_data()
+    load_sampled_cnn_data()
