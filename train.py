@@ -61,7 +61,7 @@ def check_accuracy(loader, model, train: bool | None = None):
         acc = float(num_correct) / num_samples
         if train is not None:
             if train:
-                split = 'test'
+                split = 'train'
                 training_accs.append(acc)
             else:
                 split = 'val'
@@ -94,10 +94,10 @@ def plot_curves():
 
 
 if __name__ == '__main__':
-    model = MLP(hidden_dims=[128, 256, 256, 256, 128])
+    model = MLP(hidden_dims=[128, 256, 1024, 256, 128])
 
     # lr = 0.001 was too small and it was taking forever probably due to dropout
-    optimizer = optim.SGD(model.parameters(), lr=0.01)
+    optimizer = optim.SGD(model.parameters(), lr=0.1)
 
     X_train, X_test, y_train, y_test = utils.load_mlp_data()
     # X_train, X_test, y_train, y_test = utils.load_sampled_cnn_data()
@@ -109,8 +109,7 @@ if __name__ == '__main__':
     # 80/20 split for training and validation sets
     num_train = int(0.8 * len(train_dataset) // 1)
     size = len(train_dataset)
-    # print(f'train set: {num_train}, val set: {size - num_train}')
-    # print(f'test set: {len(test_dataset)}')
+    print(f'train set: {num_train}, val set: {size - num_train}, test set: {len(test_dataset)}')
 
     train_loader = DataLoader(train_dataset, batch_size=64, sampler=sampler.SubsetRandomSampler(range(num_train)))
     val_loader = DataLoader(train_dataset, batch_size=64, sampler=sampler.SubsetRandomSampler(range(num_train, size)))
