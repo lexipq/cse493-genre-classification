@@ -4,7 +4,7 @@ import torch.optim as optim
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
 from torch.utils.data import TensorDataset, DataLoader, sampler
-from model import MLP
+from model import MLP, ResNet18, CNN
 
 
 # boilerplate mainly copy-pasted from A4's PyTorch.ipynb
@@ -94,13 +94,15 @@ def plot_curves():
 
 
 if __name__ == '__main__':
-    model = MLP(hidden_dims=[128, 256, 1024, 256, 128])
+    # model = MLP(hidden_dims=[2048, 1024, 256, 128])
+    # model = ResNet18()
+    model = CNN()
 
     # lr = 0.001 was too small and it was taking forever probably due to dropout
-    optimizer = optim.SGD(model.parameters(), lr=0.1)
+    optimizer = optim.SGD(model.parameters(), lr=0.01)
 
-    X_train, X_test, y_train, y_test = utils.load_mlp_data()
-    # X_train, X_test, y_train, y_test = utils.load_sampled_cnn_data()
+    # X_train, X_test, y_train, y_test = utils.load_mlp_data()
+    X_train, X_test, y_train, y_test = utils.load_sampled_cnn_data()
     # X_train, X_test, y_train, y_test = utils.load_full_cnn_data()
 
     train_dataset = TensorDataset(X_train, y_train)
@@ -115,7 +117,7 @@ if __name__ == '__main__':
     val_loader = DataLoader(train_dataset, batch_size=64, sampler=sampler.SubsetRandomSampler(range(num_train, size)))
     test_loader = DataLoader(test_dataset, batch_size=64)
 
-    train_model(model, optimizer)
+    train_model(model, optimizer, epochs=10)
     check_accuracy(test_loader, model)
     plot_curves()
 

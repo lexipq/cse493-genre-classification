@@ -132,22 +132,29 @@ class CNN(nn.Module):
         num_filters=32,
         filter_size=3,
         hidden_dim=100,
-        num_classes=10,
-        weight_scale=1e-3,
-        reg=0.0,
+        num_classes=10
     ):
-        super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(input_dim[0], num_filters, kernel_size=filter_size, padding= 1)
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.conv1 = nn.Conv2d(input_dim[0], num_filters, kernel_size=filter_size, padding= 1)
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.fc1 = nn.Linear(num_filters * ((input_dim[1] / 2) * (input_dim[2] / 2)).floor, hidden_dim)
+        super().__init__()
+        self.conv1 = nn.Conv2d(input_dim[0], num_filters, kernel_size=filter_size, padding=1)
+        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.conv2 = nn.Conv2d(num_filters, 2 * num_filters, kernel_size=filter_size, padding=1)
+        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.fc1 = nn.Linear(2 * num_filters * ((input_dim[1] // 4) * (input_dim[2] // 4)), hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, num_classes)
-        self.reg = reg
+        self.relu = nn.ReLU()
+        self.flatten = nn.Flatten()
 
     def forward(self, x):
-        x = self.pool(nn.functional.relu(self.conv1(x)))
-        x = x.view(x.size(0), -1)
-        x = nn.functional.relu(self.fc1(x))
+        x = self.conv1(x)
+        x = self.relu(x)
+        x = self.pool1(x)
+
+        x = self.conv2(x)
+        x = self.relu(x)
+        x = self.pool2(x)
+
+        x = self.flatten(x)
+        x = self.fc1(x)
+        x = self.relu(x)
         x = self.fc2(x)
         return x
